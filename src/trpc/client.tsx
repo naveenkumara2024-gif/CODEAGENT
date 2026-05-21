@@ -47,10 +47,11 @@ export function TRPCReactProvider(
  
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
-      transformer: superjson,
+      
       links: [
         httpBatchLink({
-          url: getUrl(),
+            transformer: superjson,
+            url: getUrl()
         }),
       ],
     }),
