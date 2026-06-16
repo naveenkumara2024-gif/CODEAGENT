@@ -1,0 +1,17 @@
+# This is a config for E2B sandbox template.
+# You can use template ID (name-your-template) to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox.create("name-your-template") # Sync sandbox
+# sandbox = await AsyncSandbox.create("name-your-template") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('name-your-template')
+
+team_id = "d5f72df0-0114-49b9-8ef5-adff1544fe69"
+start_cmd = "/compile_page. sh"
+dockerfile = "e2b.Dockerfile"
+template_name = "as-default-team-a96a/coden_agent-dev-2"
+template_id = "4ibfjh0q1qyqs4m6ete0"
