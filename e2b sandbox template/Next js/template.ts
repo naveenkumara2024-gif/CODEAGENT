@@ -1,4 +1,4 @@
-import { Template, waitForURL } from 'e2b'
+import { Template } from 'e2b'
 
 export const template = Template()
   .fromImage('node:22-slim')
@@ -6,13 +6,15 @@ export const template = Template()
   .setWorkdir('/')
   .runCmd('apt-get update && apt-get install -y curl && apt-get clean && rm -rf /var/lib/apt/lists/*')
   .copy('compile_page.sh', '/compile_page.sh')
+  .runCmd("sed -i 's/\\r$//' /compile_page.sh")
   .runCmd('chmod +x /compile_page.sh')
+  .runCmd('mkdir -p /home/user/nextjs-app')
   .setWorkdir('/home/user/nextjs-app')
   .runCmd('npx --yes create-next-app@latest . --yes')
-  .runCmd('npx --yes shadcn@2.6.3 init --yes -b neutral --force')
-  .runCmd('npx --yes shadcn@2.6.3 add --all --yes')
+  .runCmd('npx --yes shadcn@2.6.3 init -t next --yes -b neutral --force')
   .runCmd('npm install tw-animate-css')
-  .runCmd('mv /home/user/nextjs-app/* /home/user/ && rm -rf /home/user/nextjs-app')
+  .runCmd('npx --yes shadcn@2.6.3 add --all --yes')
+  .runCmd('cp -a /home/user/nextjs-app/. /home/user/ && rm -rf /home/user/nextjs-app') 
   .setWorkdir('/home/user')
   .setUser('user')
-  .setStartCmd('npx next dev --turbopack', waitForURL('http://localhost:3000'))
+  .setStartCmd('bash /compile_page.sh && sleep 20');
