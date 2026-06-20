@@ -23,11 +23,8 @@ export default function RootLayout({children,}: Readonly<{children: React.ReactN
 {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <TRPCReactProvider>
-
           <Toaster/>
           {children}
         </TRPCReactProvider>

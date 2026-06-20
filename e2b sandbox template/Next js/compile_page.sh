@@ -4,20 +4,13 @@
 # and makes sure the Next.js app is (1) running and (2) the `/` page is compiled
 function ping_server() {
 	counter=0
-	max_counter=${MAX_PING_ATTEMPTS:-600}
 	response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000")
 	while [[ ${response} -ne 200 ]]; do
 	  let counter++
 	  if  (( counter % 20 == 0 )); then
         echo "Waiting for server to start..."
+        sleep 0.1
       fi
-
-	  if (( counter > max_counter )); then
-	    echo "Error: server did not start within ${max_counter} attempts." >&2
-	    exit 1
-	  fi
-
-	  sleep 0.1
 
 	  response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3000")
 	done
