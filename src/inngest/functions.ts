@@ -2,13 +2,22 @@
 import { inngest } from "./client";
 import { Sandbox } from "e2b";
 import { getSandbox } from "./utils";
-import { createAgent, openai, createTool, createNetwork } from '@inngest/agent-kit';
+import { createAgent, openai, createTool, createNetwork, Tool } from '@inngest/agent-kit';
 import { z } from "zod";
 import { PROMPT } from "../prompt/constant";
 import { lastAssistantTextMessageContent } from "./utils";
+import { prisma } from "../lib/db";
+
+interface AgentState{
+  summary: string;
+  files: { [path: string]: string };
+}
 export const processTask = inngest.createFunction(
   { id: "process-task", triggers: { event: "app/task.created" } },
   async ({ event, step }) => {
+    if (!event?.data?.value) {
+      throw new Error("No value provided in event data");
+    }
     let createdSandbox: Sandbox | undefined;
 
     try {
@@ -16,11 +25,11 @@ export const processTask = inngest.createFunction(
         createdSandbox = await Sandbox.create("coden_agent-dev-2");
         return createdSandbox.sandboxId;
       });
-      const codeagent = createAgent({
+      const codeagent = createAgent<AgentState>({
         name: 'Coden NEXT-JS Agent',
         system: PROMPT,
         model: openai({
-          model: 'poolside/laguna-xs.2:free', // or 'google/gemini-2.5-pro', 'openai/gpt-4o', etc.
+          model: 'nex-agi/nex-n2-pro:free', // or 'google/gemini-2.5-pro', 'openai/gpt-4o', etc.
           apiKey: process.env.OPENROUTER_API_KEY,
           baseUrl: 'https://openrouter.ai/api/v1',
           defaultParameters: {
@@ -69,7 +78,7 @@ export const processTask = inngest.createFunction(
                 })
               )
             }),
-            handler: async ({ files }, { step, network }) => {
+            handler: async ({ files }, { step, network } : Tool.Options<AgentState>) => {
               const newFiles = await step?.run("create-update-files", async () => {
                 try {
                   const updatedFiles = network.state.data.files || {};
@@ -130,7 +139,7 @@ export const processTask = inngest.createFunction(
         }
       }
       );
-      const network = createNetwork({
+      const network = createNetwork<AgentState>({
         name: 'Coden Agent Network',
         agents: [codeagent],
         maxIter: 15,
@@ -144,10 +153,40 @@ export const processTask = inngest.createFunction(
       })
 
       const result = await network.run(event.data.value)
+      const iserror = !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length === 0;
+      
+
       const geturl = await step.run("get-url", async () => {
         const sandbox = await getSandbox(sandboxId);
         const host = sandbox.getHost(3000);
         return `http://${host}`;
+      });
+
+      await step.run("save-ai-results", async () => {
+        if (iserror){
+          return await prisma.message.create({
+            data:{
+              content: "something went wrong. please try again.",
+              role: "ASSISTANT",
+              type: "ERROR",
+            }
+          })
+        }
+        return await prisma.message.create({
+          data:{
+            content: result.state.data.summary || "No summary available",
+            role: "ASSISTANT",
+            type: "RESULT",
+            fragment: {
+              create: {
+                sandboxUrl: geturl,
+                title:"Fragment created from AI result",
+                files: result.state.data.files ,
+              }
+            }
+          }
+        })
       });
       return {
         SandboxUrl: `The sandbox is running at ${geturl}`,
@@ -155,6 +194,7 @@ export const processTask = inngest.createFunction(
         files: result.state.data.files || {},
         summary: result.state.data.summary || "No summary available",
       };
+
     } catch (error) {
       console.error("Failed to process sandbox task:", error);
       throw error;

@@ -1,4 +1,4 @@
-import { Template } from 'e2b'
+import { Template, waitForURL } from 'e2b'
 
 export const template = Template()
   .fromImage('node:22-slim')
@@ -17,4 +17,4 @@ export const template = Template()
   .runCmd('cp -a /home/user/nextjs-app/. /home/user/ && rm -rf /home/user/nextjs-app') 
   .setWorkdir('/home/user')
   .setUser('user')
-  .setStartCmd('bash /compile_page.sh && sleep 20');
+  .setStartCmd('bash /compile_page.sh',waitForURL('http://localhost:3000', 200));
