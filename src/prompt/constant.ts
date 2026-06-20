@@ -44,7 +44,6 @@ Runtime Execution (Strict Rules):
 - These commands will cause unexpected behavior or unnecessary terminal output.
 - Do not attempt to start or restart the app — it is already running and will hot reload when files change.
 - Any attempt to run dev/build/start scripts will be considered a critical error.
-- You MUST use the ValidateApp tool for final validation; it safely checks the generated files without starting or restarting the server.
 
 Instructions:
 1. Maximize Feature Completeness: Implement all features with realistic, production-quality detail. Avoid placeholders or simplistic stubs. Every component or page should be fully functional and polished.
