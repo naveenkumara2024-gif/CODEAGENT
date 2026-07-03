@@ -15,8 +15,8 @@ interface AgentState{
 export const processTask = inngest.createFunction(
   { id: "process-task", triggers: { event: "app/task.created" } },
   async ({ event, step }) => {
-    if (!event?.data?.value) {
-      throw new Error("No value provided in event data");
+    if (!event?.data?.value && !event?.data?.projectId) {
+      throw new Error("No value or project ID provided in event data");
     }
     let createdSandbox: Sandbox | undefined;
 
@@ -29,9 +29,9 @@ export const processTask = inngest.createFunction(
         name: 'Coden NEXT-JS Agent',
         system: PROMPT,
         model: openai({
-          model: 'nex-agi/nex-n2-pro:free', // or 'google/gemini-2.5-pro', 'openai/gpt-4o', etc.
-          apiKey: process.env.OPENROUTER_API_KEY,
-          baseUrl: 'https://openrouter.ai/api/v1',
+          model: 'mistral-medium-3-5', // or 'google/gemini-2.5-pro', 'openai/gpt-4o', etc.
+          apiKey: process.env.NARA_API_KEY || "",
+          baseUrl: 'https://router.bynara.id/v1',
           defaultParameters: {
             temperature: 0.1,
           },
@@ -167,6 +167,7 @@ export const processTask = inngest.createFunction(
         if (iserror){
           return await prisma.message.create({
             data:{
+              projectId: event.data?.projectId,
               content: "something went wrong. please try again.",
               role: "ASSISTANT",
               type: "ERROR",
@@ -175,6 +176,7 @@ export const processTask = inngest.createFunction(
         }
         return await prisma.message.create({
           data:{
+            projectId: event.data?.projectId,
             content: result.state.data.summary || "No summary available",
             role: "ASSISTANT",
             type: "RESULT",
